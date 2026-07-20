@@ -28,6 +28,7 @@ class _AuthGateScreenState extends State<AuthGateScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      context.read<AuthProvider>().reset();
       _authenticate();
     }
   }

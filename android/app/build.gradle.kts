@@ -15,7 +15,7 @@ android {
 
     defaultConfig {
         applicationId = "com.cashier.adminkeygen"
-        minSdk = flutter.minSdkVersion
+        minSdk = 21
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
