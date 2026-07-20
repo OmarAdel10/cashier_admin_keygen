@@ -61,11 +61,17 @@ class GatekeeperService {
           message:
               'Biometric permission not granted. Check app permissions in Settings.',
         );
+      case 'no_activity':
+      case 'no_fragment_activity':
+        return const Failure(
+          code: 'unavailable',
+          message:
+              'This device is not configured for biometric authentication.',
+        );
       default:
-        return Failure(
-          code: 'platform_error',
-          message: e.message ?? 'Unknown platform error.',
-          exception: e,
+        return const Failure(
+          code: 'failure',
+          message: 'Authentication failed. Please try again.',
         );
     }
   }
