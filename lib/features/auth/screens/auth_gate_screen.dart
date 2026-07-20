@@ -16,7 +16,7 @@ class _AuthGateScreenState extends State<AuthGateScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _authenticate();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _authenticate());
   }
 
   @override

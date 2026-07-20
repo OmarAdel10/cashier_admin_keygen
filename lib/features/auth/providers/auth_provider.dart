@@ -4,38 +4,39 @@ import '../../../core/services/gatekeeper_service.dart';
 
 enum AuthStatus { idle, loading, success, failure, unavailable }
 
-class AuthProvider extends ChangeNotifier {
-  final GatekeeperService _gatekeeper = GatekeeperService();
-  AuthStatus _status = AuthStatus.idle;
-  String? _errorMessage;
+class AuthState {
+  final AuthStatus status;
+  final String? errorMessage;
 
-  AuthStatus get status => _status;
-  String? get errorMessage => _errorMessage;
+  const AuthState({
+    this.status = AuthStatus.idle,
+    this.errorMessage,
+  });
+}
+
+class AuthProvider extends ValueNotifier<AuthState> {
+  final GatekeeperService _gatekeeper = GatekeeperService();
+  AuthProvider() : super(const AuthState());
+
+  AuthStatus get status => value.status;
+  String? get errorMessage => value.errorMessage;
 
   Future<void> authenticate() async {
-    _status = AuthStatus.loading;
-    _errorMessage = null;
-    notifyListeners();
+    value = const AuthState(status: AuthStatus.loading);
 
     final result = await _gatekeeper.authenticate();
 
     switch (result) {
       case Right():
-        _status = AuthStatus.success;
+        value = const AuthState(status: AuthStatus.success);
       case Left(value: final f) when f.code == 'unavailable':
-        _status = AuthStatus.unavailable;
-        _errorMessage = f.message;
+        value = AuthState(status: AuthStatus.unavailable, errorMessage: f.message);
       case Left(value: final f):
-        _status = AuthStatus.failure;
-        _errorMessage = f.message;
+        value = AuthState(status: AuthStatus.failure, errorMessage: f.message);
     }
-
-    notifyListeners();
   }
 
   void reset() {
-    _status = AuthStatus.idle;
-    _errorMessage = null;
-    notifyListeners();
+    value = const AuthState();
   }
 }
