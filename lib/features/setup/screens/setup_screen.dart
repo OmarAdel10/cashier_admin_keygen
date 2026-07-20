@@ -99,6 +99,7 @@ class _SetupScreenState extends State<SetupScreen> {
                         border: OutlineInputBorder(),
                       ),
                       maxLines: 1,
+                      obscureText: true,
                     ),
                     const SizedBox(height: 8),
                     FilledButton(

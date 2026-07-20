@@ -101,6 +101,8 @@ class _SigningView extends StatelessWidget {
                     final regex = RegExp(r'^CS-[A-Z0-9]{4}-[A-Z0-9]{4}$');
                     if (regex.hasMatch(v.toUpperCase())) {
                       provider.setDeviceId(v.toUpperCase());
+                    } else {
+                      provider.setDeviceId('');
                     }
                   },
                 ),
