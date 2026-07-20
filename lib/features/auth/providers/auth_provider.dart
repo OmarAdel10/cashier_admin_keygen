@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import '../../../core/failure.dart';
 import '../../../core/services/gatekeeper_service.dart';
 
 enum AuthStatus { idle, loading, success, failure, unavailable }
@@ -24,15 +23,14 @@ class AuthProvider extends ValueNotifier<AuthState> {
   Future<void> authenticate() async {
     value = const AuthState(status: AuthStatus.loading);
 
-    final result = await _gatekeeper.authenticate();
+    final failure = await _gatekeeper.authenticate();
 
-    switch (result) {
-      case Right():
-        value = const AuthState(status: AuthStatus.success);
-      case Left(value: final f) when f.code == 'unavailable':
-        value = AuthState(status: AuthStatus.unavailable, errorMessage: f.message);
-      case Left(value: final f):
-        value = AuthState(status: AuthStatus.failure, errorMessage: f.message);
+    if (failure == null) {
+      value = const AuthState(status: AuthStatus.success);
+    } else if (failure.code == 'unavailable') {
+      value = AuthState(status: AuthStatus.unavailable, errorMessage: failure.message);
+    } else {
+      value = AuthState(status: AuthStatus.failure, errorMessage: failure.message);
     }
   }
 

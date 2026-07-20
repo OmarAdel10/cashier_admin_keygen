@@ -14,9 +14,7 @@ class KeyManager {
 
   Future<String> generateKeyPair() async {
     final keyPair = ed.generateKey();
-    final seedBytes = Uint8List.fromList(
-      keyPair.privateKey.bytes.sublist(0, 32),
-    );
+    final seedBytes = ed.seed(keyPair.privateKey);
     final seed = base64.encode(seedBytes);
     await _storage.write(key: _seedKey, value: seed);
     return getPublicKey();
@@ -36,7 +34,7 @@ class KeyManager {
     if (seedB64 == null) throw StateError('No key pair found');
     final seedBytes = Uint8List.fromList(base64.decode(seedB64));
     final privateKey = ed.newKeyFromSeed(seedBytes);
-    return _bytesToHex(Uint8List.fromList(privateKey.bytes.sublist(32)));
+    return _bytesToHex(Uint8List.fromList(ed.public(privateKey).bytes));
   }
 
   Future<String> signDeviceId(String deviceId) async {

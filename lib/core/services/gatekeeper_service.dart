@@ -5,15 +5,15 @@ import '../failure.dart';
 class GatekeeperService {
   final LocalAuthentication _auth = LocalAuthentication();
 
-  Future<Either<Failure, bool>> authenticate() async {
+  Future<Failure?> authenticate() async {
     try {
       final canAuth = await _auth.canCheckBiometrics ||
           await _auth.isDeviceSupported();
       if (!canAuth) {
-        return const Left(Failure(
+        return const Failure(
           code: 'unavailable',
           message: 'This device does not support biometric authentication.',
-        ));
+        );
       }
 
       final result = await _auth.authenticate(
@@ -24,20 +24,20 @@ class GatekeeperService {
         ),
       );
 
-      if (result) return const Right(true);
+      if (result) return null;
 
-      return const Left(Failure(
+      return const Failure(
         code: 'cancelled',
         message: 'Authentication cancelled or not recognized. Try again.',
-      ));
+      );
     } on PlatformException catch (e) {
-      return Left(_failureFromPlatformException(e));
+      return _failureFromPlatformException(e);
     } catch (e) {
-      return Left(Failure(
+      return Failure(
         code: 'unknown',
         message: 'An unexpected error occurred: $e',
         exception: e,
-      ));
+      );
     }
   }
 
