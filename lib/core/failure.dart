@@ -3,8 +3,8 @@ sealed class Either<L, R> {
 
   T fold<T>(T Function(L) left, T Function(R) right) {
     return switch (this) {
-      Left(l: final l) => left(l),
-      Right(r: final r) => right(r),
+      Left(value: final l) => left(l),
+      Right(value: final r) => right(r),
     };
   }
 
