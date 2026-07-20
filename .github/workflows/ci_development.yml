@@ -1,13 +1,13 @@
-name: Android CI
+name: CI - Development
 
 on:
   push:
-    branches: [development, master]
+    branches: [development]
   pull_request:
-    branches: [development, master]
+    branches: [development]
 
 jobs:
-  build:
+  ci:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,8 +22,3 @@ jobs:
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test
-      - run: flutter build apk --release
-      - uses: actions/upload-artifact@v4
-        with:
-          name: app-release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
