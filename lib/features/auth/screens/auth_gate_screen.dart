@@ -10,7 +10,8 @@ class AuthGateScreen extends StatefulWidget {
   State<AuthGateScreen> createState() => _AuthGateScreenState();
 }
 
-class _AuthGateScreenState extends State<AuthGateScreen> with WidgetsBindingObserver {
+class _AuthGateScreenState extends State<AuthGateScreen>
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
@@ -27,7 +28,6 @@ class _AuthGateScreenState extends State<AuthGateScreen> with WidgetsBindingObse
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      context.read<AuthProvider>().lock();
       _authenticate();
     }
   }
@@ -41,9 +41,10 @@ class _AuthGateScreenState extends State<AuthGateScreen> with WidgetsBindingObse
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, auth, _) {
-        if (auth.isAuthenticated) {
+        if (auth.status == AuthStatus.success) {
           return widget.child;
         }
+
         return PopScope(
           canPop: false,
           child: Scaffold(
@@ -52,29 +53,91 @@ class _AuthGateScreenState extends State<AuthGateScreen> with WidgetsBindingObse
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.fingerprint, size: 80, color: Colors.white70),
+                  _buildIcon(auth.status),
                   const SizedBox(height: 24),
-                  const Text(
-                    'Authentication Required',
-                    style: TextStyle(color: Colors.white, fontSize: 20),
-                  ),
+                  _buildTitle(auth.status),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Unlock to access key generator',
-                    style: TextStyle(color: Colors.white60, fontSize: 14),
-                  ),
+                  _buildSubtitle(auth.status, auth.errorMessage),
                   const SizedBox(height: 32),
-                  ElevatedButton.icon(
-                    onPressed: _authenticate,
-                    icon: const Icon(Icons.lock_open),
-                    label: const Text('Authenticate'),
-                  ),
+                  _buildButton(auth.status),
                 ],
               ),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildIcon(AuthStatus status) {
+    return switch (status) {
+      AuthStatus.loading => const SizedBox(
+          width: 80,
+          height: 80,
+          child: CircularProgressIndicator(color: Colors.white70),
+        ),
+      AuthStatus.failure => const Icon(
+          Icons.fingerprint,
+          size: 80,
+          color: Colors.redAccent,
+        ),
+      AuthStatus.unavailable => const Icon(
+          Icons.smartphone,
+          size: 80,
+          color: Colors.orangeAccent,
+        ),
+      _ => const Icon(
+          Icons.fingerprint,
+          size: 80,
+          color: Colors.white70,
+        ),
+    };
+  }
+
+  Widget _buildTitle(AuthStatus status) {
+    return Text(
+      switch (status) {
+        AuthStatus.loading => 'Authenticating\u2026',
+        AuthStatus.failure => 'Authentication Failed',
+        AuthStatus.unavailable => 'Not Available',
+        _ => 'Authentication Required',
+      },
+      style: const TextStyle(color: Colors.white, fontSize: 20),
+    );
+  }
+
+  Widget _buildSubtitle(AuthStatus status, String? errorMessage) {
+    return Text(
+      switch (status) {
+        AuthStatus.loading => 'Please complete the biometric prompt',
+        AuthStatus.failure || AuthStatus.unavailable =>
+          errorMessage ?? 'Unable to authenticate.',
+        _ => 'Tap to unlock key generator',
+      },
+      style: const TextStyle(color: Colors.white60, fontSize: 14),
+      textAlign: TextAlign.center,
+    );
+  }
+
+  Widget _buildButton(AuthStatus status) {
+    if (status == AuthStatus.loading) {
+      return const SizedBox.shrink();
+    }
+
+    return ElevatedButton.icon(
+      onPressed: _authenticate,
+      icon: Icon(
+        status == AuthStatus.unavailable
+            ? Icons.refresh
+            : Icons.lock_open,
+      ),
+      label: Text(
+        switch (status) {
+          AuthStatus.failure => 'Retry',
+          AuthStatus.unavailable => 'Try Again',
+          _ => 'Authenticate',
+        },
+      ),
     );
   }
 }
