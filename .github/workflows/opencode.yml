@@ -27,6 +27,11 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Configure Personal Identity
+        run: |
+          git config --global user.name "Omar Adel"
+          git config --global user.email "omaradel1.dev@gmail.com"
+
       - name: Run opencode
         uses: anomalyco/opencode/github@latest
         env:
