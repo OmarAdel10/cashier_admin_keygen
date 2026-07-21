@@ -26,6 +26,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GH_PAT }}
+          ref: development
           persist-credentials: true
 
       - name: Configure Personal Identity
@@ -37,7 +38,7 @@ jobs:
         uses: anomalyco/opencode/github@latest
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         with:
           model: opencode/deepseek-v4-flash-free
           use_github_token: true
