@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:cashoer_system_activation/features/auth/screens/auth_gate_screen.dart';
 
 void main() {
-  const channel = MethodChannel('local_auth');
+  const channel = MethodChannel('plugins.flutter.io/local_auth');
 
   Widget buildTestApp({bool initialAuthResult = true}) {
     return MaterialApp(
