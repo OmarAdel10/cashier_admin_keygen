@@ -36,6 +36,7 @@ class _AuthGateScreenState extends State<AuthGateScreen>
       if (!mounted) return;
       final auth = context.read<AuthProvider>();
       if (auth.status == AuthStatus.loading) return;
+      if (auth.status == AuthStatus.success) return;
       _authenticate();
     }
   }
@@ -47,10 +48,10 @@ class _AuthGateScreenState extends State<AuthGateScreen>
       await auth.authenticate();
     } catch (e) {
       if (!mounted) return;
-      auth.reset();
       auth.value = AuthState(
         status: AuthStatus.failure,
         errorMessage: 'Unexpected error: $e',
+        attemptCount: auth.value.attemptCount + 1,
       );
     }
   }
@@ -61,7 +62,7 @@ class _AuthGateScreenState extends State<AuthGateScreen>
       builder: (context, auth, _) {
         return Stack(
           children: [
-            widget.child,
+            if (auth.status == AuthStatus.success) widget.child,
             if (auth.status != AuthStatus.success)
               PopScope(
                 canPop: false,
@@ -77,7 +78,7 @@ class _AuthGateScreenState extends State<AuthGateScreen>
                         const SizedBox(height: 8),
                         _buildSubtitle(auth.status, auth.errorMessage),
                         const SizedBox(height: 32),
-                        _buildButton(auth.status),
+                        _buildButton(auth.status, auth.attemptCount),
                       ],
                     ),
                   ),
@@ -132,21 +133,25 @@ class _AuthGateScreenState extends State<AuthGateScreen>
     );
   }
 
-  Widget _buildButton(AuthStatus status) {
+  Widget _buildButton(AuthStatus status, int attemptCount) {
     if (status == AuthStatus.loading) {
       return const SizedBox.shrink();
     }
 
+    final isLocked = attemptCount >= AuthProvider.maxAttempts;
+
     return ElevatedButton.icon(
-      onPressed: _authenticate,
+      onPressed: isLocked ? null : _authenticate,
       icon: Icon(
-        status == AuthStatus.unavailable ? Icons.refresh : Icons.lock_open,
+        isLocked ? Icons.lock : (status == AuthStatus.unavailable ? Icons.refresh : Icons.lock_open),
       ),
-      label: Text(switch (status) {
-        AuthStatus.failure => 'Retry',
-        AuthStatus.unavailable => 'Try Again',
-        _ => 'Authenticate',
-      }),
+      label: Text(
+        isLocked ? 'Locked' : switch (status) {
+          AuthStatus.failure => 'Retry',
+          AuthStatus.unavailable => 'Try Again',
+          _ => 'Authenticate',
+        },
+      ),
     );
   }
 }
