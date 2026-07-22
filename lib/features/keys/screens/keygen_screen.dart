@@ -26,6 +26,7 @@ class _KeyGenScreenState extends State<KeyGenScreen> {
 
   @override
   void dispose() {
+    _setupProvider.dispose();
     _manualController.dispose();
     super.dispose();
   }

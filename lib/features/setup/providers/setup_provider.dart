@@ -2,7 +2,10 @@ import 'package:flutter/foundation.dart';
 import '../../../core/services/key_manager.dart';
 
 class SetupProvider extends ChangeNotifier {
-  final KeyManager _keyManager = KeyManager();
+  final KeyManager _keyManager;
+
+  SetupProvider({KeyManager? keyManager})
+      : _keyManager = keyManager ?? KeyManager();
   bool _isLoading = false;
   String? _publicKey;
   String? _error;
