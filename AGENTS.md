@@ -30,6 +30,10 @@ flutter analyze          # lint check
 flutter test             # run tests (1 widget test)
 ```
 
+## Code Changes
+- Small/localized changes: use `Minimal Change Engineer` agent
+- Large/multi-file changes: use `Agents Orchestrator` agent
+
 ## Git Workflow
 - Primary branch: `development` — all work lands here
 - `master` — release branch (tags `v*` trigger CD)
