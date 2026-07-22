@@ -17,8 +17,10 @@ class AuthState {
 
 class AuthProvider extends ValueNotifier<AuthState> {
   static const int maxAttempts = 3;
-  final GatekeeperService _gatekeeper = GatekeeperService();
-  AuthProvider() : super(const AuthState());
+  final GatekeeperService _gatekeeper;
+  AuthProvider({GatekeeperService? gatekeeper})
+      : _gatekeeper = gatekeeper ?? GatekeeperService(),
+        super(const AuthState());
 
   AuthStatus get status => value.status;
   String? get errorMessage => value.errorMessage;

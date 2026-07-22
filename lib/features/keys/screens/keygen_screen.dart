@@ -19,6 +19,7 @@ class _KeyGenScreenState extends State<KeyGenScreen> {
   late final SetupProvider _setupProvider;
   bool? _hasKeys;
   final _manualController = TextEditingController();
+  int _resetCounter = 0;
 
   @override
   void initState() {
@@ -64,20 +65,25 @@ class _KeyGenScreenState extends State<KeyGenScreen> {
 
     return ChangeNotifierProvider(
       create: (_) => KeygenProvider(keyManager: widget.keyManager),
-      child: _SigningView(manualController: _manualController),
+      child: _SigningView(
+        manualController: _manualController,
+        resetCounter: _resetCounter,
+        onGenerateAnother: () => setState(() => _resetCounter++),
+      ),
     );
   }
 }
 
 String? _getDeviceIdError(String text, String? deviceId) {
   if (text.isEmpty) return null;
+  if (text.length < 5) return null; // give user a chance to type
   if (deviceId == null) return 'Invalid format. Use CS-XXXX-XXXX';
   return null;
 }
 
 class _ScannerSection extends StatefulWidget {
   final TextEditingController manualController;
-  const _ScannerSection({required this.manualController});
+  const _ScannerSection({super.key, required this.manualController});
 
   @override
   State<_ScannerSection> createState() => _ScannerSectionState();
@@ -110,7 +116,13 @@ class _ScannerSectionState extends State<_ScannerSection> {
 
 class _SigningView extends StatelessWidget {
   final TextEditingController manualController;
-  const _SigningView({required this.manualController});
+  final int resetCounter;
+  final VoidCallback onGenerateAnother;
+  const _SigningView({
+    required this.manualController,
+    required this.resetCounter,
+    required this.onGenerateAnother,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +133,10 @@ class _SigningView extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _ScannerSection(manualController: manualController),
+            _ScannerSection(
+              key: ValueKey(resetCounter),
+              manualController: manualController,
+            ),
             Consumer<KeygenProvider>(
               builder: (context, provider, _) {
                 return Column(
@@ -171,6 +186,7 @@ class _SigningView extends StatelessWidget {
                         onPressed: () {
                           provider.reset();
                           manualController.clear();
+                          onGenerateAnother();
                         },
                         icon: const Icon(Icons.refresh),
                         label: const Text('Generate Another'),
