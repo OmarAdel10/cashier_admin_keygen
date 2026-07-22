@@ -58,7 +58,10 @@ class KeyManager {
   Uint8List _hexToBytes(String hex) {
     final cleaned = hex.replaceAll(' ', '');
     if (cleaned.length % 2 != 0) {
-      throw ArgumentError('Hex string must have even length');
+      throw ArgumentError('Seed hex string must have even length');
+    }
+    if (!RegExp(r'^[0-9a-fA-F]+$').hasMatch(cleaned)) {
+      throw ArgumentError('Seed contains invalid hex characters. Use only 0-9, A-F.');
     }
     final bytes = Uint8List(cleaned.length ~/ 2);
     for (int i = 0; i < bytes.length; i++) {

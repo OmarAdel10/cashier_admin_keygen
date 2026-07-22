@@ -32,8 +32,12 @@ class _KeyGenScreenState extends State<KeyGenScreen> {
   }
 
   Future<void> _checkKeys() async {
-    final hasKeys = await _setupProvider.hasKeys();
-    if (mounted) setState(() => _hasKeys = hasKeys);
+    try {
+      final hasKeys = await _setupProvider.hasKeys();
+      if (mounted) setState(() => _hasKeys = hasKeys);
+    } catch (e) {
+      if (mounted) setState(() => _hasKeys = false);
+    }
   }
 
   @override
@@ -60,6 +64,12 @@ class _KeyGenScreenState extends State<KeyGenScreen> {
       child: _SigningView(manualController: _manualController),
     );
   }
+}
+
+String? _getDeviceIdError(String text, String? deviceId) {
+  if (text.isEmpty) return null;
+  if (deviceId == null) return 'Invalid format. Use CS-XXXX-XXXX';
+  return null;
 }
 
 class _ScannerSection extends StatefulWidget {
@@ -116,9 +126,10 @@ class _SigningView extends StatelessWidget {
                   children: [
                     TextField(
                       controller: manualController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: 'CS-XXXX-XXXX',
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
+                        errorText: _getDeviceIdError(manualController.text, provider.deviceId),
                       ),
                       textCapitalization: TextCapitalization.characters,
                       onChanged: (v) {
