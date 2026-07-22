@@ -61,6 +61,39 @@ class _KeyGenScreenState extends State<KeyGenScreen> {
   }
 }
 
+class _ScannerSection extends StatefulWidget {
+  final TextEditingController manualController;
+  const _ScannerSection({required this.manualController});
+
+  @override
+  State<_ScannerSection> createState() => _ScannerSectionState();
+}
+
+class _ScannerSectionState extends State<_ScannerSection> {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text('Scan Device ID QR Code:',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        QrScannerWidget(
+          onDetected: (id) {
+            context.read<KeygenProvider>().setDeviceId(id);
+            widget.manualController.text = id;
+          },
+        ),
+        const SizedBox(height: 16),
+        const Divider(),
+        const Text('Or enter manually:',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+}
+
 class _SigningView extends StatelessWidget {
   final TextEditingController manualController;
   const _SigningView({required this.manualController});
@@ -69,79 +102,71 @@ class _SigningView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Cashier Admin Keygen')),
-      body: Consumer<KeygenProvider>(
-        builder: (context, provider, _) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text('Scan Device ID QR Code:',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                QrScannerWidget(
-                  onDetected: (id) {
-                    provider.setDeviceId(id);
-                    manualController.text = id;
-                  },
-                ),
-                const SizedBox(height: 16),
-                const Divider(),
-                const Text('Or enter manually:',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: manualController,
-                  decoration: const InputDecoration(
-                    hintText: 'CS-XXXX-XXXX',
-                    border: OutlineInputBorder(),
-                  ),
-                  textCapitalization: TextCapitalization.characters,
-                  onChanged: (v) {
-                    final regex = RegExp(r'^CS-[A-Z0-9]{4}-[A-Z0-9]{4}$');
-                    if (regex.hasMatch(v.toUpperCase())) {
-                      provider.setDeviceId(v.toUpperCase());
-                    } else {
-                      provider.setDeviceId(null);
-                    }
-                  },
-                ),
-                const SizedBox(height: 16),
-                FilledButton.icon(
-                  onPressed: provider.deviceId == null || provider.isSigning
-                      ? null
-                      : () => provider.sign(),
-                  icon: provider.isSigning
-                      ? const SizedBox(
-                          width: 16, height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Icon(Icons.token),
-                  label: const Text('Generate Activation Key'),
-                ),
-                if (provider.error != null) ...[
-                  const SizedBox(height: 16),
-                  Text(provider.error!, style: const TextStyle(color: Colors.red)),
-                ],
-                if (provider.hasResult) ...[
-                  const SizedBox(height: 24),
-                  KeyDisplayWidget(
-                    deviceId: provider.deviceId!,
-                    activationKey: provider.activationKey!,
-                  ),
-                  const SizedBox(height: 8),
-                  TextButton.icon(
-                    onPressed: () {
-                      provider.reset();
-                      manualController.clear();
-                    },
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Generate Another'),
-                  ),
-                ],
-              ],
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _ScannerSection(manualController: manualController),
+            Consumer<KeygenProvider>(
+              builder: (context, provider, _) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextField(
+                      controller: manualController,
+                      decoration: const InputDecoration(
+                        hintText: 'CS-XXXX-XXXX',
+                        border: OutlineInputBorder(),
+                      ),
+                      textCapitalization: TextCapitalization.characters,
+                      onChanged: (v) {
+                        final regex = RegExp(r'^CS-[A-Z0-9]{4}-[A-Z0-9]{4}$');
+                        if (regex.hasMatch(v.toUpperCase())) {
+                          provider.setDeviceId(v.toUpperCase());
+                        } else {
+                          provider.setDeviceId(null);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                      onPressed: provider.deviceId == null || provider.isSigning
+                          ? null
+                          : () => provider.sign(),
+                      icon: provider.isSigning
+                          ? const SizedBox(
+                              width: 16, height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.token),
+                      label: const Text('Generate Activation Key'),
+                    ),
+                    if (provider.error != null) ...[
+                      const SizedBox(height: 16),
+                      Text(provider.error!, style: const TextStyle(color: Colors.red)),
+                    ],
+                    if (provider.hasResult) ...[
+                      const SizedBox(height: 24),
+                      KeyDisplayWidget(
+                        deviceId: provider.deviceId!,
+                        activationKey: provider.activationKey!,
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: () {
+                          provider.reset();
+                          manualController.clear();
+                        },
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Generate Another'),
+                      ),
+                    ],
+                  ],
+                );
+              },
             ),
-          );
-        },
+          ],
+        ),
       ),
     );
   }
