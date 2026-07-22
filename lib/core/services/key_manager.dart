@@ -27,7 +27,7 @@ class KeyManager {
     final seedBytes = ed.seed(keyPair.privateKey);
     final seed = base64.encode(seedBytes);
     await _storage.write(key: _seedKey, value: seed);
-    return getPublicKey();
+    return _bytesToHex(Uint8List.fromList(keyPair.publicKey.bytes));
   }
 
   Future<void> importSeed(String seedHex) async {

@@ -163,8 +163,8 @@ class _SigningView extends StatelessWidget {
                     if (provider.hasResult) ...[
                       const SizedBox(height: 24),
                       KeyDisplayWidget(
-                        deviceId: provider.deviceId!,
-                        activationKey: provider.activationKey!,
+                        deviceId: provider.activationKey!.deviceId,
+                        activationKey: provider.activationKey!.signatureBase64,
                       ),
                       const SizedBox(height: 8),
                       TextButton.icon(

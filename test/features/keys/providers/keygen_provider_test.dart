@@ -55,7 +55,8 @@ void main() {
 
       await provider.sign();
 
-      expect(provider.activationKey, 'dGhpcyBpcyBhIHRlc3QK');
+      expect(provider.activationKey!.signatureBase64, 'dGhpcyBpcyBhIHRlc3QK');
+      expect(provider.activationKey!.deviceId, 'CS-ABCD-1234');
       expect(provider.isSigning, false);
       expect(provider.error, isNull);
     });

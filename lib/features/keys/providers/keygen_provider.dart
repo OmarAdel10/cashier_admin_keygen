@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import '../../../core/models/activation_key.dart';
 import '../../../core/services/key_manager.dart';
 
 class KeygenProvider extends ChangeNotifier {
   final KeyManager _keyManager;
   String? _deviceId;
-  String? _activationKey;
+  ActivationKey? _activationKey;
   bool _isSigning = false;
   String? _error;
 
@@ -13,7 +14,7 @@ class KeygenProvider extends ChangeNotifier {
       : _keyManager = keyManager ?? KeyManager();
 
   String? get deviceId => _deviceId;
-  String? get activationKey => _activationKey;
+  ActivationKey? get activationKey => _activationKey;
   bool get isSigning => _isSigning;
   String? get error => _error;
   bool get hasResult => _activationKey != null;
@@ -32,7 +33,8 @@ class KeygenProvider extends ChangeNotifier {
     _activationKey = null;
     notifyListeners();
     try {
-      _activationKey = await _keyManager.signDeviceId(_deviceId!);
+      final signature = await _keyManager.signDeviceId(_deviceId!);
+      _activationKey = ActivationKey(deviceId: _deviceId!, signatureBase64: signature);
     } catch (e) {
       _error = e.toString();
     }
