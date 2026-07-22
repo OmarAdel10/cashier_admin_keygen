@@ -34,6 +34,9 @@ migrate_working_dir/
 /coverage/
 devtools_options.yaml
 
+# Agents related
+.opencode/
+
 # Symbolication related
 app.*.symbols
 
