@@ -4,8 +4,18 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:ed25519_edwards/ed25519_edwards.dart' as ed;
 
 class KeyManager {
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final FlutterSecureStorage _storage;
+
+  KeyManager({FlutterSecureStorage? storage})
+      : _storage = storage ?? const FlutterSecureStorage();
   static const _seedKey = 'ed25519_seed';
+
+  Future<ed.PrivateKey> _getPrivateKey() async {
+    final seedB64 = await _storage.read(key: _seedKey);
+    if (seedB64 == null) throw StateError('No key pair found');
+    final seedBytes = Uint8List.fromList(base64.decode(seedB64));
+    return ed.newKeyFromSeed(seedBytes);
+  }
 
   Future<bool> hasKeyPair() async {
     final seed = await _storage.read(key: _seedKey);
@@ -30,18 +40,12 @@ class KeyManager {
   }
 
   Future<String> getPublicKey() async {
-    final seedB64 = await _storage.read(key: _seedKey);
-    if (seedB64 == null) throw StateError('No key pair found');
-    final seedBytes = Uint8List.fromList(base64.decode(seedB64));
-    final privateKey = ed.newKeyFromSeed(seedBytes);
+    final privateKey = await _getPrivateKey();
     return _bytesToHex(Uint8List.fromList(ed.public(privateKey).bytes));
   }
 
   Future<String> signDeviceId(String deviceId) async {
-    final seedB64 = await _storage.read(key: _seedKey);
-    if (seedB64 == null) throw StateError('No key pair found');
-    final seedBytes = Uint8List.fromList(base64.decode(seedB64));
-    final privateKey = ed.newKeyFromSeed(seedBytes);
+    final privateKey = await _getPrivateKey();
     final payload = Uint8List.fromList(utf8.encode(deviceId));
     final signature = ed.sign(privateKey, payload);
     return base64.encode(signature);
