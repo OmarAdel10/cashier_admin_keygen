@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/services/key_manager.dart';
 import '../../setup/providers/setup_provider.dart';
 import '../../setup/screens/setup_screen.dart';
 import '../providers/keygen_provider.dart';
@@ -7,20 +8,22 @@ import '../widgets/qr_scanner_widget.dart';
 import '../widgets/key_display_widget.dart';
 
 class KeyGenScreen extends StatefulWidget {
-  const KeyGenScreen({super.key});
+  final KeyManager? keyManager;
+  const KeyGenScreen({super.key, this.keyManager});
 
   @override
   State<KeyGenScreen> createState() => _KeyGenScreenState();
 }
 
 class _KeyGenScreenState extends State<KeyGenScreen> {
-  final SetupProvider _setupProvider = SetupProvider();
+  late final SetupProvider _setupProvider;
   bool? _hasKeys;
   final _manualController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    _setupProvider = SetupProvider(keyManager: widget.keyManager);
     _checkKeys();
   }
 
@@ -60,7 +63,7 @@ class _KeyGenScreenState extends State<KeyGenScreen> {
     }
 
     return ChangeNotifierProvider(
-      create: (_) => KeygenProvider(),
+      create: (_) => KeygenProvider(keyManager: widget.keyManager),
       child: _SigningView(manualController: _manualController),
     );
   }
