@@ -3,11 +3,14 @@ import 'package:flutter/foundation.dart';
 import '../../../core/services/key_manager.dart';
 
 class KeygenProvider extends ChangeNotifier {
-  final KeyManager _keyManager = KeyManager();
+  final KeyManager _keyManager;
   String? _deviceId;
   String? _activationKey;
   bool _isSigning = false;
   String? _error;
+
+  KeygenProvider({KeyManager? keyManager})
+      : _keyManager = keyManager ?? KeyManager();
 
   String? get deviceId => _deviceId;
   String? get activationKey => _activationKey;
@@ -15,7 +18,7 @@ class KeygenProvider extends ChangeNotifier {
   String? get error => _error;
   bool get hasResult => _activationKey != null;
 
-  void setDeviceId(String id) {
+  void setDeviceId(String? id) {
     _deviceId = id;
     _activationKey = null;
     _error = null;

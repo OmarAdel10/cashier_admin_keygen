@@ -102,7 +102,7 @@ class _SigningView extends StatelessWidget {
                     if (regex.hasMatch(v.toUpperCase())) {
                       provider.setDeviceId(v.toUpperCase());
                     } else {
-                      provider.setDeviceId('');
+                      provider.setDeviceId(null);
                     }
                   },
                 ),
