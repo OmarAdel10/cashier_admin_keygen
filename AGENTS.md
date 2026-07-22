@@ -36,6 +36,8 @@ flutter test             # run tests (1 widget test)
 - Commit format: `<emoji> <type>(<scope>): <summary under 50 chars>`
   - 🐣 feat, 🐞 fix, 📄 docs, 🎨 style, ✏️ refactor, ⚡ perf, 🏗️ chore
 - No double quotes in commit messages — single quotes only
+- Use `emoji-commit` skill for drafting/creating commits
+- Use `merge-message` skill to draft merge messages; merge via `git merge --no-ff -m '<message>' <branch>`
 - CI: `flutter analyze` + `flutter test` on push/PR to `development`
 - CD: analyze + test + build APK + GitHub release on push/tags to `master`
 
