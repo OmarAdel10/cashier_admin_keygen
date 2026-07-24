@@ -30,7 +30,6 @@ class _AuthGateScreenState extends State<AuthGateScreen>
     if (state == AppLifecycleState.paused) {
       if (!mounted) return;
       final auth = context.read<AuthProvider>();
-      if (auth.status == AuthStatus.loading) return;
       if (!(auth.status == AuthStatus.failure &&
           auth.attemptCount >= AuthProvider.maxAttempts)) {
         auth.reset();

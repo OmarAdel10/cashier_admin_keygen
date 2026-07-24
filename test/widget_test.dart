@@ -67,6 +67,31 @@ void main() {
     expect(auth.status, AuthStatus.loading);
   });
 
+  testWidgets('pause during loading resets to idle, resume re-triggers auth',
+      (tester) async {
+    final auth = AuthProvider();
+    await tester.pumpWidget(
+      ChangeNotifierProvider.value(
+        value: auth,
+        child: const MaterialApp(
+          home: AuthGateScreen(child: SizedBox.shrink()),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    auth.value = const AuthState(status: AuthStatus.loading);
+    await tester.pump();
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+
+    expect(auth.status, AuthStatus.idle);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+
+    expect(auth.status, AuthStatus.loading);
+  });
+
   testWidgets('loading guard prevents concurrent auth on resume',
       (tester) async {
     final auth = AuthProvider();
