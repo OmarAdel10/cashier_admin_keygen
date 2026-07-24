@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:cashier_admin_keygen/core/services/key_manager.dart';
 import 'package:cashier_admin_keygen/features/setup/providers/setup_provider.dart';
 import '../../../shared/fake_key_manager.dart';
 
@@ -57,6 +58,47 @@ void main() {
       expect(result, false);
       expect(provider.error, isNotNull);
       expect(provider.publicKey, isNull);
+    });
+
+    test('resetKeys clears publicKey and error', () async {
+      final keyManager = FakeKeyManager(publicKey: 'deadbeef');
+      final provider = SetupProvider(keyManager: keyManager);
+      await provider.generateKey();
+      expect(provider.publicKey, 'deadbeef');
+
+      await provider.resetKeys();
+      expect(provider.publicKey, isNull);
+      expect(provider.error, isNull);
+    });
+  });
+
+  group('SetupProvider friendly errors', () {
+    late KeyManager realKeyManager;
+
+    setUp(() {
+      realKeyManager = KeyManager();
+    });
+
+    test('importSeed with odd-length hex shows friendly even-length error',
+        () async {
+      final provider = SetupProvider(keyManager: realKeyManager);
+      final result = await provider.importSeed('A' * 63);
+      expect(result, false);
+      expect(provider.error, contains('even number of characters'));
+    });
+
+    test('importSeed with invalid hex chars shows friendly error', () async {
+      final provider = SetupProvider(keyManager: realKeyManager);
+      final result = await provider.importSeed('Z' * 64);
+      expect(result, false);
+      expect(provider.error, contains('invalid'));
+    });
+
+    test('importSeed with wrong byte length shows friendly error', () async {
+      final provider = SetupProvider(keyManager: realKeyManager);
+      final result = await provider.importSeed('A' * 128);
+      expect(result, false);
+      expect(provider.error, contains('64 hex characters'));
     });
   });
 }

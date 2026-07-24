@@ -38,4 +38,7 @@ class FakeKeyManager extends KeyManager {
     if (shouldThrow) throw Exception('getPublicKey failed');
     return publicKey ?? 'mock_pubkey';
   }
+
+  @override
+  Future<void> deleteKeyPair() async {}
 }

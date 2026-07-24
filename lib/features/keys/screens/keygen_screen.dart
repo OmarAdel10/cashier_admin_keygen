@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/constants.dart';
 import '../../../core/services/key_manager.dart';
 import '../../setup/providers/setup_provider.dart';
 import '../../setup/screens/setup_screen.dart';
@@ -44,6 +45,32 @@ class _KeyGenScreenState extends State<KeyGenScreen> {
     }
   }
 
+  Future<void> _onResetKeys() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Reset Keys'),
+        content: const Text(
+          'This will delete your current keypair. '
+          'You will need to generate or import a new one.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Reset'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await _setupProvider.resetKeys();
+    if (mounted) setState(() => _hasKeys = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_hasKeys == null) {
@@ -69,6 +96,7 @@ class _KeyGenScreenState extends State<KeyGenScreen> {
         manualController: _manualController,
         resetCounter: _resetCounter,
         onGenerateAnother: () => setState(() => _resetCounter++),
+        onResetKeys: _onResetKeys,
       ),
     );
   }
@@ -118,16 +146,27 @@ class _SigningView extends StatelessWidget {
   final TextEditingController manualController;
   final int resetCounter;
   final VoidCallback onGenerateAnother;
+  final VoidCallback onResetKeys;
   const _SigningView({
     required this.manualController,
     required this.resetCounter,
     required this.onGenerateAnother,
+    required this.onResetKeys,
   });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Cashier Admin Keygen')),
+      appBar: AppBar(
+        title: const Text('Cashier Admin Keygen'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            tooltip: 'Reset Keys',
+            onPressed: onResetKeys,
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -144,6 +183,7 @@ class _SigningView extends StatelessWidget {
                   children: [
                     TextField(
                       controller: manualController,
+                      enabled: !provider.isSigning,
                       decoration: InputDecoration(
                         hintText: 'CS-XXXX-XXXX',
                         border: const OutlineInputBorder(),
@@ -151,8 +191,7 @@ class _SigningView extends StatelessWidget {
                       ),
                       textCapitalization: TextCapitalization.characters,
                       onChanged: (v) {
-                        final regex = RegExp(r'^CS-[A-Z0-9]{4}-[A-Z0-9]{4}$');
-                        if (regex.hasMatch(v.toUpperCase())) {
+                        if (AppConstants.deviceIdRegex.hasMatch(v.toUpperCase())) {
                           provider.setDeviceId(v.toUpperCase());
                         } else {
                           provider.setDeviceId(null);
