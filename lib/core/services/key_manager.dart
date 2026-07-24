@@ -13,8 +13,12 @@ class KeyManager {
   Future<ed.PrivateKey> _getPrivateKey() async {
     final seedB64 = await _storage.read(key: _seedKey);
     if (seedB64 == null) throw StateError('No key pair found');
-    final seedBytes = Uint8List.fromList(base64.decode(seedB64));
-    return ed.newKeyFromSeed(seedBytes);
+    try {
+      final seedBytes = Uint8List.fromList(base64.decode(seedB64));
+      return ed.newKeyFromSeed(seedBytes);
+    } on FormatException {
+      throw StateError('Corrupted key data');
+    }
   }
 
   Future<bool> hasKeyPair() async {
@@ -49,6 +53,10 @@ class KeyManager {
     final payload = Uint8List.fromList(utf8.encode(deviceId));
     final signature = ed.sign(privateKey, payload);
     return base64.encode(signature);
+  }
+
+  Future<void> deleteKeyPair() async {
+    await _storage.delete(key: _seedKey);
   }
 
   String _bytesToHex(Uint8List bytes) {

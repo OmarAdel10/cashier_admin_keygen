@@ -27,14 +27,15 @@ class KeygenProvider extends ChangeNotifier {
   }
 
   Future<void> sign() async {
-    if (_deviceId == null || _deviceId!.isEmpty) return;
+    final id = _deviceId;
+    if (id == null || id.isEmpty) return;
     _isSigning = true;
     _error = null;
     _activationKey = null;
     notifyListeners();
     try {
-      final signature = await _keyManager.signDeviceId(_deviceId!);
-      _activationKey = ActivationKey(deviceId: _deviceId!, signatureBase64: signature);
+      final signature = await _keyManager.signDeviceId(id);
+      _activationKey = ActivationKey(deviceId: id, signatureBase64: signature);
     } catch (e) {
       _error = e.toString();
     }

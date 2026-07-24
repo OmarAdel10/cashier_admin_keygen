@@ -27,6 +27,7 @@ class AuthProvider extends ValueNotifier<AuthState> {
   int get attemptCount => value.attemptCount;
 
   Future<void> authenticate() async {
+    if (value.status == AuthStatus.loading) return;
     if (value.attemptCount >= maxAttempts) return;
     value = AuthState(status: AuthStatus.loading, attemptCount: value.attemptCount);
 
