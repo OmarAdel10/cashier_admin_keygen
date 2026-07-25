@@ -5,7 +5,7 @@ import 'package:cashier_admin_keygen/features/auth/providers/auth_provider.dart'
 
 class FakeGatekeeperService extends GatekeeperService {
   final Failure? _failureResult;
-  FakeGatekeeperService({Failure? failureResult}) : _failureResult = failureResult;
+  FakeGatekeeperService({this._failureResult});
 
   @override
   Future<Failure?> authenticate() async => _failureResult;
