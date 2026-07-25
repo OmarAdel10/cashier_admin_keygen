@@ -95,7 +95,7 @@ void main() {
       provider.setDeviceId('CS-ABCD-1234');
       expect(provider.deviceId, 'CS-ABCD-1234');
 
-      provider.setDeviceId(null);
+      provider.setDeviceId('CS-ABC-12345');
 
       expect(provider.deviceId, isNull);
       expect(provider.hasResult, false);

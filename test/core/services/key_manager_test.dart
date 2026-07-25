@@ -38,6 +38,19 @@ class FakeSecureStorage extends Fake implements FlutterSecureStorage {
       _store.remove(key);
     }
   }
+
+  @override
+  Future<void> delete({
+    required String key,
+    IOSOptions? iOptions,
+    AndroidOptions? aOptions,
+    LinuxOptions? lOptions,
+    WebOptions? webOptions,
+    MacOsOptions? mOptions,
+    WindowsOptions? wOptions,
+  }) async {
+    _store.remove(key);
+  }
 }
 
 void main() {
@@ -88,6 +101,55 @@ void main() {
       test('throws StateError when no key pair exists', () async {
         expect(
           () => keyManager.signDeviceId('CS-ABCD-1234'),
+          throwsA(isA<StateError>()),
+        );
+      });
+    });
+
+    group('generateKeyPair', () {
+      test('creates keys and stores seed', () async {
+        final pubKey = await keyManager.generateKeyPair();
+        expect(pubKey.length, greaterThan(0));
+        expect(await keyManager.hasKeyPair(), isTrue);
+        // Generated key can sign
+        final sig = await keyManager.signDeviceId('CS-ABCD-1234');
+        expect(sig.length, greaterThan(0));
+      });
+    });
+
+    group('importSeed', () {
+      test('stores and uses supplied seed', () async {
+        final keyPair = ed.generateKey();
+        final seedBytes = ed.seed(keyPair.privateKey);
+        final seedHex = seedBytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+        await keyManager.importSeed(seedHex);
+        expect(await keyManager.hasKeyPair(), isTrue);
+        final pubKeyHex = await keyManager.getPublicKey();
+        final expectedHex = keyPair.publicKey.bytes
+            .map((b) => b.toRadixString(16).padLeft(2, '0'))
+            .join();
+        expect(pubKeyHex, equals(expectedHex));
+      });
+
+      test('throws on invalid seed length', () async {
+        expect(
+          () => keyManager.importSeed('aabb'),
+          throwsA(isA<KeyManagerException>()),
+        );
+      });
+    });
+
+    group('deleteKeyPair', () {
+      test('removes stored key so subsequent access throws', () async {
+        final keyPair = ed.generateKey();
+        final seedBytes = ed.seed(keyPair.privateKey);
+        await fakeStorage.write(key: 'ed25519_seed', value: base64.encode(seedBytes));
+        expect(await keyManager.hasKeyPair(), isTrue);
+
+        await keyManager.deleteKeyPair();
+        expect(await keyManager.hasKeyPair(), isFalse);
+        expect(
+          () => keyManager.getPublicKey(),
           throwsA(isA<StateError>()),
         );
       });
