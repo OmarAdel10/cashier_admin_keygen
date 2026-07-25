@@ -32,7 +32,7 @@ class _SetupScreenState extends State<SetupScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(Icons.vpn_key, size: 64, color: Colors.indigoAccent),
+                Icon(Icons.vpn_key, size: 64, color: Theme.of(context).colorScheme.primary),
                 const SizedBox(height: 16),
                 const Text(
                   'No master key found',
@@ -51,7 +51,7 @@ class _SetupScreenState extends State<SetupScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade900,
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: SelectableText(

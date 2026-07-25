@@ -31,6 +31,24 @@ class _QrScannerWidgetState extends State<QrScannerWidget> {
               widget.onDetected(normalized);
             }
           },
+          errorBuilder: (context, error, child) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.error_outline, size: 48),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Camera unavailable. Use manual entry below.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
       ),
     );

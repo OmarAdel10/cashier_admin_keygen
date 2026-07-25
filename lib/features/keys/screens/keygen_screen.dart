@@ -41,7 +41,16 @@ class _KeyGenScreenState extends State<KeyGenScreen> {
       final hasKeys = await _setupProvider.hasKeys();
       if (mounted) setState(() => _hasKeys = hasKeys);
     } catch (e) {
-      if (mounted) setState(() => _hasKeys = false);
+      if (e is StateError && e.message.contains('No key pair found')) {
+        if (mounted) setState(() => _hasKeys = false);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error checking keys: $e')),
+          );
+          setState(() => _hasKeys = false);
+        }
+      }
     }
   }
 
