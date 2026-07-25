@@ -1,30 +1,116 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:cashoer_system_activation/main.dart';
+import 'package:provider/provider.dart';
+import 'package:cashier_admin_keygen/features/auth/providers/auth_provider.dart';
+import 'package:cashier_admin_keygen/features/auth/screens/auth_gate_screen.dart';
+import 'package:cashier_admin_keygen/features/keys/screens/keygen_screen.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('AuthGateScreen shows authentication prompt when not authenticated',
+      (tester) async {
+    await tester.pumpWidget(
+      ChangeNotifierProvider(
+        create: (_) => AuthProvider(),
+        child: const MaterialApp(
+          home: AuthGateScreen(child: KeyGenScreen()),
+        ),
+      ),
+    );
+    expect(find.text('Authentication Required'), findsOneWidget);
+  });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+  testWidgets('pause resets auth state back to idle', (tester) async {
+    final auth = AuthProvider();
+    await tester.pumpWidget(
+      ChangeNotifierProvider.value(
+        value: auth,
+        child: const MaterialApp(
+          home: AuthGateScreen(child: SizedBox.shrink()),
+        ),
+      ),
+    );
+    await tester.pump();
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    auth.value = const AuthState(status: AuthStatus.success);
+    await tester.pump();
+    expect(auth.status, AuthStatus.success);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+
+    expect(auth.status, AuthStatus.idle);
+  });
+
+  testWidgets('pause then resume triggers re-authentication from idle',
+      (tester) async {
+    final auth = AuthProvider();
+    await tester.pumpWidget(
+      ChangeNotifierProvider.value(
+        value: auth,
+        child: const MaterialApp(
+          home: AuthGateScreen(child: SizedBox.shrink()),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    auth.value = const AuthState(status: AuthStatus.success);
+    await tester.pump();
+    expect(auth.status, AuthStatus.success);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    expect(auth.status, AuthStatus.idle);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+
+    expect(auth.status, AuthStatus.loading);
+  });
+
+  testWidgets('pause during loading resets to idle, resume re-triggers auth',
+      (tester) async {
+    final auth = AuthProvider();
+    await tester.pumpWidget(
+      ChangeNotifierProvider.value(
+        value: auth,
+        child: const MaterialApp(
+          home: AuthGateScreen(child: SizedBox.shrink()),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    auth.value = const AuthState(status: AuthStatus.loading);
+    await tester.pump();
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+
+    expect(auth.status, AuthStatus.idle);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+
+    expect(auth.status, AuthStatus.loading);
+  });
+
+  testWidgets('loading guard prevents concurrent auth on resume',
+      (tester) async {
+    final auth = AuthProvider();
+    await tester.pumpWidget(
+      ChangeNotifierProvider.value(
+        value: auth,
+        child: const MaterialApp(
+          home: AuthGateScreen(child: SizedBox.shrink()),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    auth.value = const AuthState(status: AuthStatus.loading);
+    await tester.pump();
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+
+    expect(auth.status, AuthStatus.loading);
   });
 }

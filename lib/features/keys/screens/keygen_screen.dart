@@ -1,0 +1,252 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../core/constants.dart';
+import '../../../core/services/key_manager.dart';
+import '../../setup/providers/setup_provider.dart';
+import '../../setup/screens/setup_screen.dart';
+import '../providers/keygen_provider.dart';
+import '../widgets/qr_scanner_widget.dart';
+import '../widgets/key_display_widget.dart';
+
+class KeyGenScreen extends StatefulWidget {
+  final KeyManager? keyManager;
+  const KeyGenScreen({super.key, this.keyManager});
+
+  @override
+  State<KeyGenScreen> createState() => _KeyGenScreenState();
+}
+
+class _KeyGenScreenState extends State<KeyGenScreen> {
+  late final SetupProvider _setupProvider;
+  bool? _hasKeys;
+  final _manualController = TextEditingController();
+  int _resetCounter = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _setupProvider = SetupProvider(keyManager: widget.keyManager);
+    _checkKeys();
+  }
+
+  @override
+  void dispose() {
+    _setupProvider.dispose();
+    _manualController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _checkKeys() async {
+    try {
+      final hasKeys = await _setupProvider.hasKeys();
+      if (mounted) setState(() => _hasKeys = hasKeys);
+    } catch (e) {
+      if (e is StateError && e.message.contains('No key pair found')) {
+        if (mounted) setState(() => _hasKeys = false);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error checking keys: $e')),
+          );
+          setState(() => _hasKeys = false);
+        }
+      }
+    }
+  }
+
+  Future<void> _onResetKeys() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Reset Keys'),
+        content: const Text(
+          'This will delete your current keypair. '
+          'You will need to generate or import a new one.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Reset'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await _setupProvider.resetKeys();
+    if (mounted) setState(() => _hasKeys = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_hasKeys == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (!_hasKeys!) {
+      return ChangeNotifierProvider.value(
+        value: _setupProvider,
+        child: SetupScreen(
+          onComplete: () {
+            setState(() => _hasKeys = true);
+          },
+        ),
+      );
+    }
+
+    return ChangeNotifierProvider(
+      create: (_) => KeygenProvider(keyManager: widget.keyManager),
+      child: _SigningView(
+        manualController: _manualController,
+        resetCounter: _resetCounter,
+        onGenerateAnother: () => setState(() => _resetCounter++),
+        onResetKeys: _onResetKeys,
+      ),
+    );
+  }
+}
+
+String? _getDeviceIdError(String text, String? deviceId) {
+  if (text.isEmpty) return null;
+  if (text.length < 5) return null; // give user a chance to type
+  if (deviceId == null) return 'Invalid format. Use CS-XXXX-XXXX';
+  return null;
+}
+
+class _ScannerSection extends StatefulWidget {
+  final TextEditingController manualController;
+  const _ScannerSection({super.key, required this.manualController});
+
+  @override
+  State<_ScannerSection> createState() => _ScannerSectionState();
+}
+
+class _ScannerSectionState extends State<_ScannerSection> {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text('Scan Device ID QR Code:',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        QrScannerWidget(
+          onDetected: (id) {
+            context.read<KeygenProvider>().setDeviceId(id);
+            widget.manualController.text = id;
+          },
+        ),
+        const SizedBox(height: 16),
+        const Divider(),
+        const Text('Or enter manually:',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+}
+
+class _SigningView extends StatelessWidget {
+  final TextEditingController manualController;
+  final int resetCounter;
+  final VoidCallback onGenerateAnother;
+  final VoidCallback onResetKeys;
+  const _SigningView({
+    required this.manualController,
+    required this.resetCounter,
+    required this.onGenerateAnother,
+    required this.onResetKeys,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Cashier Admin Keygen'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            tooltip: 'Reset Keys',
+            onPressed: onResetKeys,
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _ScannerSection(
+              key: ValueKey(resetCounter),
+              manualController: manualController,
+            ),
+            Consumer<KeygenProvider>(
+              builder: (context, provider, _) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextField(
+                      controller: manualController,
+                      enabled: !provider.isSigning,
+                      decoration: InputDecoration(
+                        hintText: 'CS-XXXX-XXXX',
+                        border: const OutlineInputBorder(),
+                        errorText: _getDeviceIdError(manualController.text, provider.deviceId),
+                      ),
+                      textCapitalization: TextCapitalization.characters,
+                      onChanged: (v) {
+                        if (AppConstants.deviceIdRegex.hasMatch(v.toUpperCase())) {
+                          provider.setDeviceId(v.toUpperCase());
+                        } else {
+                          provider.setDeviceId(null);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                      onPressed: provider.deviceId == null || provider.isSigning
+                          ? null
+                          : () => provider.sign(),
+                      icon: provider.isSigning
+                          ? const SizedBox(
+                              width: 16, height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.token),
+                      label: const Text('Generate Activation Key'),
+                    ),
+                    if (provider.error != null) ...[
+                      const SizedBox(height: 16),
+                      Text(provider.error!, style: const TextStyle(color: Colors.red)),
+                    ],
+                    if (provider.hasResult) ...[
+                      const SizedBox(height: 24),
+                      KeyDisplayWidget(
+                        deviceId: provider.activationKey!.deviceId,
+                        activationKey: provider.activationKey!.signatureBase64,
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: () {
+                          provider.reset();
+                          manualController.clear();
+                          onGenerateAnother();
+                        },
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Generate Another'),
+                      ),
+                    ],
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

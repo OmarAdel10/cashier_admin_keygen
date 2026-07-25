@@ -32,6 +32,10 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
+devtools_options.yaml
+
+# Agents related
+.opencode/
 
 # Symbolication related
 app.*.symbols

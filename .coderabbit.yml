@@ -1,0 +1,5 @@
+path_filters:
+  - "!.github/**"
+  - "!.opencode/**"
+  - "!.superpowers/**"
+  - "!docs/**"
