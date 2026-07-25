@@ -15,16 +15,14 @@ class SetupProvider extends ChangeNotifier {
   String? get error => _error;
 
   static String _friendlyError(Object e) {
-    if (e is ArgumentError) {
-      final msg = e.message.toString();
-      if (msg.contains('32 bytes')) {
-        return 'Seed must be exactly 64 hex characters (32 bytes).';
-      }
-      if (msg.contains('even length')) {
-        return 'Seed hex string must have an even number of characters.';
-      }
-      if (msg.contains('invalid hex')) {
-        return 'Seed contains invalid characters. Use only 0-9 and A-F.';
+    if (e is KeyManagerException) {
+      switch (e.code) {
+        case 'invalid_length':
+          return 'Seed must be exactly 64 hex characters (32 bytes).';
+        case 'odd_length':
+          return 'Seed hex string must have an even number of characters.';
+        case 'invalid_chars':
+          return 'Seed contains invalid characters. Use only 0-9 and A-F.';
       }
     }
     return e.toString();

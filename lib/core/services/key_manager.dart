@@ -3,11 +3,19 @@ import 'dart:typed_data';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:ed25519_edwards/ed25519_edwards.dart' as ed;
 
+class KeyManagerException implements Exception {
+  final String code;
+  final String message;
+  const KeyManagerException(this.code, this.message);
+  @override
+  String toString() => message;
+}
+
 class KeyManager {
   final FlutterSecureStorage _storage;
 
   KeyManager({FlutterSecureStorage? storage})
-      : _storage = storage ?? const FlutterSecureStorage();
+      : _storage = storage ?? FlutterSecureStorage(aOptions: const AndroidOptions(encryptedSharedPreferences: true));
   static const _seedKey = 'ed25519_seed';
 
   Future<ed.PrivateKey> _getPrivateKey() async {
@@ -17,6 +25,8 @@ class KeyManager {
       final seedBytes = Uint8List.fromList(base64.decode(seedB64));
       return ed.newKeyFromSeed(seedBytes);
     } on FormatException {
+      throw StateError('Corrupted key data');
+    } on ArgumentError {
       throw StateError('Corrupted key data');
     }
   }
@@ -37,7 +47,7 @@ class KeyManager {
   Future<void> importSeed(String seedHex) async {
     final seedBytes = _hexToBytes(seedHex);
     if (seedBytes.length != 32) {
-      throw ArgumentError('Seed must be exactly 32 bytes (64 hex chars)');
+      throw KeyManagerException('invalid_length', 'Seed must be exactly 32 bytes (64 hex chars)');
     }
     final seedB64 = base64.encode(seedBytes);
     await _storage.write(key: _seedKey, value: seedB64);
@@ -66,10 +76,10 @@ class KeyManager {
   Uint8List _hexToBytes(String hex) {
     final cleaned = hex.replaceAll(' ', '');
     if (cleaned.length % 2 != 0) {
-      throw ArgumentError('Seed hex string must have even length');
+      throw KeyManagerException('odd_length', 'Seed hex string must have an even number of characters.');
     }
     if (!RegExp(r'^[0-9a-fA-F]+$').hasMatch(cleaned)) {
-      throw ArgumentError('Seed contains invalid hex characters. Use only 0-9, A-F.');
+      throw KeyManagerException('invalid_chars', 'Seed contains invalid hex characters. Use only 0-9, A-F.');
     }
     final bytes = Uint8List(cleaned.length ~/ 2);
     for (int i = 0; i < bytes.length; i++) {

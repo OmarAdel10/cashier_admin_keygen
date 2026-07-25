@@ -37,6 +37,12 @@ class AuthProvider extends ValueNotifier<AuthState> {
       value = const AuthState(status: AuthStatus.success);
     } else if (failure.code == 'unavailable') {
       value = AuthState(status: AuthStatus.unavailable, errorMessage: failure.message, attemptCount: value.attemptCount);
+    } else if (failure.code == 'not_enrolled' || failure.code == 'permission_denied') {
+      value = AuthState(
+        status: AuthStatus.unavailable,
+        errorMessage: failure.message,
+        attemptCount: value.attemptCount,
+      );
     } else {
       final newAttempts = value.attemptCount + 1;
       final lockedOut = newAttempts >= maxAttempts;

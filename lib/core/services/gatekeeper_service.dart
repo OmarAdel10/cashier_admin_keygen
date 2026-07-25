@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:local_auth_darwin/local_auth_darwin.dart';
 import '../models/failure.dart';
 
 class GatekeeperService {
@@ -18,8 +19,11 @@ class GatekeeperService {
 
       final result = await _auth.authenticate(
         localizedReason: 'Authenticate to access key generator',
-        options: const AuthenticationOptions(
-          biometricOnly: false,
+        authMessages: const <AuthMessages>[
+          IOSAuthMessages(localizedFallbackTitle: ''),
+        ],
+        options: AuthenticationOptions(
+          biometricOnly: true,
           stickyAuth: true,
         ),
       );
