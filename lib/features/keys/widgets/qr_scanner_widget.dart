@@ -13,26 +13,36 @@ class QrScannerWidget extends StatefulWidget {
 class _QrScannerWidgetState extends State<QrScannerWidget> {
   String? _lastDetected;
 
-  ({IconData icon, String message, Widget? action}) _buildErrorContent(
-      MobileScannerException error) {
+  ({IconData icon, String message, String? detail, String recovery, Widget? action})
+      _buildErrorContent(MobileScannerException error) {
+    String? nativeDetail;
+    if (error.errorDetails is MobileScannerErrorDetails) {
+      nativeDetail = (error.errorDetails as MobileScannerErrorDetails).message;
+    }
+
     switch (error.errorCode) {
       case MobileScannerErrorCode.permissionDenied:
         return (
           icon: Icons.no_photography_outlined,
           message: 'Camera permission denied. Grant access in device settings.',
+          detail: nativeDetail,
+          recovery: 'Use manual entry below.',
           action: null,
         );
       case MobileScannerErrorCode.unsupported:
         return (
           icon: Icons.phonelink_off_outlined,
-          message: 'Camera not available on this device. Use manual entry below.',
+          message: 'Camera not available on this device.',
+          detail: nativeDetail,
+          recovery: 'Use manual entry below.',
           action: null,
         );
       default:
-        final detail = error.errorDetails?.message;
         return (
           icon: Icons.error_outline,
-          message: detail ?? 'Camera unavailable. Use manual entry below.',
+          message: nativeDetail ?? 'Camera unavailable.',
+          detail: null,
+          recovery: 'Use manual entry below.',
           action: null,
         );
     }
@@ -40,6 +50,7 @@ class _QrScannerWidgetState extends State<QrScannerWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: SizedBox(
@@ -68,6 +79,24 @@ class _QrScannerWidgetState extends State<QrScannerWidget> {
                     const SizedBox(height: 8),
                     Text(
                       content.message,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (content.detail != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        content.detail!,
+                        style: theme.textTheme.bodySmall,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    Text(
+                      content.recovery,
+                      style: theme.textTheme.bodySmall,
                       textAlign: TextAlign.center,
                     ),
                     if (content.action != null) ...[
