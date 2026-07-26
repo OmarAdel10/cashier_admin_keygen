@@ -13,8 +13,44 @@ class QrScannerWidget extends StatefulWidget {
 class _QrScannerWidgetState extends State<QrScannerWidget> {
   String? _lastDetected;
 
+  ({IconData icon, String message, String? detail, String recovery, Widget? action})
+      _buildErrorContent(MobileScannerException error) {
+    String? nativeDetail;
+    if (error.errorDetails is MobileScannerErrorDetails) {
+      nativeDetail = (error.errorDetails as MobileScannerErrorDetails).message;
+    }
+
+    switch (error.errorCode) {
+      case MobileScannerErrorCode.permissionDenied:
+        return (
+          icon: Icons.no_photography_outlined,
+          message: 'Camera permission denied. Grant access in device settings.',
+          detail: nativeDetail,
+          recovery: 'Use manual entry below.',
+          action: null,
+        );
+      case MobileScannerErrorCode.unsupported:
+        return (
+          icon: Icons.phonelink_off_outlined,
+          message: 'Camera not available on this device.',
+          detail: nativeDetail,
+          recovery: 'Use manual entry below.',
+          action: null,
+        );
+      default:
+        return (
+          icon: Icons.error_outline,
+          message: nativeDetail ?? 'Camera unavailable.',
+          detail: null,
+          recovery: 'Use manual entry below.',
+          action: null,
+        );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: SizedBox(
@@ -32,18 +68,41 @@ class _QrScannerWidgetState extends State<QrScannerWidget> {
             }
           },
           errorBuilder: (context, error, child) {
+            final content = _buildErrorContent(error);
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.error_outline, size: 48),
+                    Icon(content.icon, size: 48),
                     const SizedBox(height: 8),
                     Text(
-                      'Camera unavailable. Use manual entry below.',
+                      content.message,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (content.detail != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        content.detail!,
+                        style: theme.textTheme.bodySmall,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    Text(
+                      content.recovery,
+                      style: theme.textTheme.bodySmall,
                       textAlign: TextAlign.center,
                     ),
+                    if (content.action != null) ...[
+                      const SizedBox(height: 12),
+                      content.action!,
+                    ],
                   ],
                 ),
               ),
