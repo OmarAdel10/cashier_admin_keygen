@@ -1,7 +1,7 @@
 name: cashier_admin_keygen
 description: 'Offline Ed25519 license key generator for Cashier POS'
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.3+4
 
 environment:
   sdk: ^3.12.2
